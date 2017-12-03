@@ -14,9 +14,11 @@ public class LineRider {
 	static NXTRegulatedMotor links = new NXTRegulatedMotor(MotorPort.B);
     static NXTRegulatedMotor rechts = new NXTRegulatedMotor(MotorPort.A);
     static UltrasonicSensor sonic = new UltrasonicSensor(SensorPort.S1);
-    static LightSensor light = new LightSensor(SensorPort.S3);
-    static int light_aktuell=-1;
-    static int weiss_wert=50;
+    static LightSensor light = new LightSensor(SensorPort.S3); // rechts
+    static LightSensor light2 = new LightSensor(SensorPort.S2); // links
+    static int light_right=-1;
+    static int light_left=-1;
+    static int weiss_wert=40;
     //static int weiss_wert=200;
 
     public static void main(String[] args) throws InterruptedException{
@@ -26,6 +28,7 @@ public class LineRider {
     
            LCD.clear();
            light.setFloodlight(true);
+           light2.setFloodlight(true);
            init_motoren(150);
     
            linie_folgen();
@@ -65,11 +68,22 @@ public static boolean forwardAndCheck(int ms) {
 	rechts.forward();
 	
 	while(remainingMs > 0) {
-		light_aktuell=light.getLightValue();
-		
-		if(light_aktuell<weiss_wert) {
+		light_right=light.getLightValue();			
+		light_left=light2.getLightValue();
+
+        boolean left_weiss = light_right > weiss_wert;
+        boolean right_weiss = light_left > weiss_wert;
+        
+		if(left_weiss && !right_weiss) {
 			links.stop();
 			rechts.stop();
+			
+			return true;
+		}
+		
+		if(!left_weiss && !right_weiss) {
+			links.backward();
+			rechts.forward();
 			
 			return true;
 		}
@@ -88,10 +102,33 @@ public static void forwardUntilDark() {
 	links.forward();
 	rechts.forward();
 	
-	while(light.getLightValue() < weiss_wert) {
-		links.stop();
-		rechts.stop();
-		return;
+       
+	while(true) {
+		light_right=light.getLightValue();			
+		light_left=light2.getLightValue();
+
+        boolean left_weiss = light_right > weiss_wert;
+        boolean right_weiss = light_left > weiss_wert;
+        
+		if(left_weiss && !right_weiss) {
+			links.stop();
+			rechts.stop();
+			
+			return;
+		}
+		
+		if(!left_weiss && !right_weiss) {
+			links.backward();
+			rechts.forward();
+			
+			return;
+		}
+		
+		if(!left_weiss && right_weiss) {
+			links.backward();
+			
+			return;
+		}
 	}
 }
 
@@ -204,25 +241,26 @@ public static void linie_folgen(){
 				continue;
 			}
 			
-			light_aktuell=light.getLightValue();
-            //LCD.drawInt(light_aktuell, 1, 3);
-            
-            if(light_aktuell>weiss_wert){        //wenn Farbe weiﬂ nach rechts drehen
-                    //LCD.drawString("linksrum", 1, 3);
+			light_right=light.getLightValue();			
+			light_left=light2.getLightValue();
 
+            boolean left_weiss = light_right > weiss_wert;
+            boolean right_weiss = light_left > weiss_wert;
+            
+            if(right_weiss && !left_weiss){
+            	rechts.forward();
+            	links.stop();
+            } else if(right_weiss && left_weiss){
                 links.forward();
                 rechts.stop();
+            } else if(!right_weiss && !left_weiss){
+            	rechts.stop();
+            	links.backward();
 
-            	//links.stop();
-            	//rechts.forward();
-            }
+        	}
             // linie gefunden
             else{                        //wenn nicht weiﬂ nach links drehen
-            	links.stop();
-                rechts.forward();
-            	
-            	//links.forward();
-            	//rechts.stop();
+            	forward(150);
             }
 		}
      }
