@@ -17,6 +17,7 @@ public class LineRider {
     static LightSensor light = new LightSensor(SensorPort.S3);
     static int light_aktuell=-1;
     static int weiss_wert=50;
+    //static int weiss_wert=200;
 
     public static void main(String[] args) throws InterruptedException{
     	//while(!Button.ENTER.isPressed()){
@@ -37,7 +38,27 @@ public static void init_motoren(int speed){
 private static boolean isStopped = false;
 private static boolean isSearching = false;
 
-public static void forwardAndCheck(int ms) {
+public static void forward(int ms) {
+	links.forward();
+	rechts.forward();
+	
+	Delay.msDelay(ms);
+	
+	links.stop();
+	rechts.stop();
+}
+
+public static void backward(int ms) {
+	links.backward();
+	rechts.backward();
+	
+	Delay.msDelay(ms);
+	
+	links.stop();
+	rechts.stop();
+}
+
+public static boolean forwardAndCheck(int ms) {
 	int remainingMs = ms;
 	
 	links.forward();
@@ -45,8 +66,32 @@ public static void forwardAndCheck(int ms) {
 	
 	while(remainingMs > 0) {
 		light_aktuell=light.getLightValue();
-		Delay.msDelay(100);
-		remainingMs -= 100;
+		
+		if(light_aktuell<weiss_wert) {
+			links.stop();
+			rechts.stop();
+			
+			return true;
+		}
+		
+		Delay.msDelay(50);
+		remainingMs -= 50;
+	}
+	
+	links.stop();
+	rechts.stop();
+	
+	return false;
+}
+
+public static void forwardUntilDark() {
+	links.forward();
+	rechts.forward();
+	
+	while(light.getLightValue() < weiss_wert) {
+		links.stop();
+		rechts.stop();
+		return;
 	}
 }
 
@@ -60,53 +105,92 @@ public static void rotateRight() {
 	rechts.rotate(-180);
 }
 
+public static void handleSearchEnd() {
+	links.stop();
+	rechts.stop();
+	isSearching = false;
+	//Button.waitForAnyPress();
+	
+	backward(100);
+	
+	links.rotate(-135);
+	
+	//links.rotate(-90, true);
+	//rechts.rotate(90);
+	
+	forwardUntilDark();
+}
+
 public static void linie_folgen(){     
 	while(true) {
 		// alles gestoppt, nichts mehr tun
 		if(isStopped) {
+			links.stop();
+			rechts.stop();
 			Delay.msDelay(1000);
 		}
 		else if(isSearching) {
 			
 			// suche zuende?
-			if(sonic.getDistance()>=10) {
-				isSearching = false;
-				continue;
-			}
+			//if(sonic.getDistance()>=15) {
+			//	isSearching = false;
+			//	continue;
+			//}
 			
 			rotateLeft();
 			
-			links.forward();
-			rechts.forward();
+			//links.forward();
+			//rechts.forward();
 			
-			Delay.msDelay(2000);
+			//Delay.msDelay(2000);
 			
-			//forwardAndCheck(2000);
+			if(forwardAndCheck(2000)) {
+				//isStopped = true;
+				//continue;
+				//isSearching = false;
+				//backward(100);
+				handleSearchEnd();
+				continue;
+			}
 			
 			rotateRight();
 			
 			// weg frei
-			if(sonic.getDistance()>=10) {
+			if(sonic.getDistance()>=15) {
 				// extraplatz verschaffen 
 				rotateLeft();
 				
-				links.forward();
-				rechts.forward();
+				//links.forward();
+				//rechts.forward();
 				
-				Delay.msDelay(1000);
+				//Delay.msDelay(1000);
 				
-				//forwardAndCheck(1000);
+				if(forwardAndCheck(1000)) {
+					//isStopped = true;
+					//continue;
+					//isSearching = false;
+					//backward(100);
+					handleSearchEnd();
+					continue;
+				}
 				
 				rotateRight();
 				
 				// extraplatz verschaffen #2
 				
-				links.forward();
-				rechts.forward();
+				//links.forward();
+				//rechts.forward();
 				
-				Delay.msDelay(4000);
+				//Delay.msDelay(4000);
 				
-				//forwardAndCheck(4000);
+				if(forwardAndCheck(4000)) {
+					//isStopped = true;
+					//continue;
+					//isSearching = false;
+					//backward(100);
+					handleSearchEnd();
+					continue;
+				}
 				
 				rotateRight();
 				
@@ -115,7 +199,7 @@ public static void linie_folgen(){
 				//continue;
 			}
 		} else {
-			if(sonic.getDistance()<=10) {
+			if(sonic.getDistance()<=15) {
 				isSearching = true;
 				continue;
 			}
@@ -125,23 +209,20 @@ public static void linie_folgen(){
             
             if(light_aktuell>weiss_wert){        //wenn Farbe weiﬂ nach rechts drehen
                     //LCD.drawString("linksrum", 1, 3);
-            	//links.setSpeed(120);
-                //rechts.setSpeed(120);
-            	
-                    rechts.stop();
-                    links.forward();
+
+                links.forward();
+                rechts.stop();
+
+            	//links.stop();
+            	//rechts.forward();
             }
             // linie gefunden
             else{                        //wenn nicht weiﬂ nach links drehen
-                    //LCD.drawInt(light_aktuell, 1, 3);
-            	//links.setSpeed(50);
-                //rechts.setSpeed(120);
+            	links.stop();
+                rechts.forward();
             	
-                //rechts.forward();
-                //links.forward();
-            	
-                    rechts.forward();
-                    links.stop();
+            	//links.forward();
+            	//rechts.stop();
             }
 		}
      }
