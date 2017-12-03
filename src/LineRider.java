@@ -11,8 +11,8 @@ import lejos.util.Delay;
 
 
 public class LineRider { 
-	static NXTRegulatedMotor links = new NXTRegulatedMotor(MotorPort.A);
-    static NXTRegulatedMotor rechts = new NXTRegulatedMotor(MotorPort.B);
+	static NXTRegulatedMotor links = new NXTRegulatedMotor(MotorPort.B);
+    static NXTRegulatedMotor rechts = new NXTRegulatedMotor(MotorPort.A);
     static UltrasonicSensor sonic = new UltrasonicSensor(SensorPort.S1);
     static LightSensor light = new LightSensor(SensorPort.S3);
     static int light_aktuell=-1;
@@ -25,7 +25,7 @@ public class LineRider {
     
            LCD.clear();
            light.setFloodlight(true);
-           init_motoren(100);
+           init_motoren(150);
     
            linie_folgen();
 }
@@ -37,6 +37,29 @@ public static void init_motoren(int speed){
 private static boolean isStopped = false;
 private static boolean isSearching = false;
 
+public static void forwardAndCheck(int ms) {
+	int remainingMs = ms;
+	
+	links.forward();
+	rechts.forward();
+	
+	while(remainingMs > 0) {
+		light_aktuell=light.getLightValue();
+		Delay.msDelay(100);
+		remainingMs -= 100;
+	}
+}
+
+public static void rotateLeft() {
+	links.rotate(-180, true);
+	rechts.rotate(180);
+}
+
+public static void rotateRight() {
+	links.rotate(180, true);
+	rechts.rotate(-180);
+}
+
 public static void linie_folgen(){     
 	while(true) {
 		// alles gestoppt, nichts mehr tun
@@ -44,21 +67,52 @@ public static void linie_folgen(){
 			Delay.msDelay(1000);
 		}
 		else if(isSearching) {
-			links.rotate(-180, true);
-			rechts.rotate(180);
+			
+			// suche zuende?
+			if(sonic.getDistance()>=10) {
+				isSearching = false;
+				continue;
+			}
+			
+			rotateLeft();
 			
 			links.forward();
 			rechts.forward();
 			
 			Delay.msDelay(2000);
 			
-			links.rotate(180, true);
-			rechts.rotate(-180);
+			//forwardAndCheck(2000);
 			
+			rotateRight();
+			
+			// weg frei
 			if(sonic.getDistance()>=10) {
-				isSearching = false;
-				isStopped = true;
-				continue;
+				// extraplatz verschaffen 
+				rotateLeft();
+				
+				links.forward();
+				rechts.forward();
+				
+				Delay.msDelay(1000);
+				
+				//forwardAndCheck(1000);
+				
+				rotateRight();
+				
+				// extraplatz verschaffen #2
+				
+				links.forward();
+				rechts.forward();
+				
+				Delay.msDelay(4000);
+				
+				//forwardAndCheck(4000);
+				
+				rotateRight();
+				
+				//isSearching = false;
+				//isStopped = true;
+				//continue;
 			}
 		} else {
 			if(sonic.getDistance()<=10) {
