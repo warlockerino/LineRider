@@ -18,7 +18,7 @@ public class LineRider {
     static LightSensor light2 = new LightSensor(SensorPort.S2); // links
     static int light_right=-1;
     static int light_left=-1;
-    static int weiss_wert=40;
+    static int weiss_wert=45;
     //static int weiss_wert=200;
 
     public static void main(String[] args) throws InterruptedException{
@@ -31,6 +31,8 @@ public class LineRider {
            light2.setFloodlight(true);
            init_motoren(150);
     
+           Button.waitForAnyPress();
+           
            linie_folgen();
 }
 public static void init_motoren(int speed){
@@ -71,8 +73,10 @@ public static boolean forwardAndCheck(int ms) {
 		light_right=light.getLightValue();			
 		light_left=light2.getLightValue();
 
-        boolean left_weiss = light_right > weiss_wert;
-        boolean right_weiss = light_left > weiss_wert;
+        //boolean left_weiss = light_right > weiss_wert;
+        //boolean right_weiss = light_left > weiss_wert;
+		boolean left_weiss = light_right < weiss_wert;
+        boolean right_weiss = light_left < weiss_wert;
         
 		if(left_weiss && !right_weiss) {
 			links.stop();
@@ -107,8 +111,10 @@ public static void forwardUntilDark() {
 		light_right=light.getLightValue();			
 		light_left=light2.getLightValue();
 
-        boolean left_weiss = light_right > weiss_wert;
-        boolean right_weiss = light_left > weiss_wert;
+        //boolean left_weiss = light_right > weiss_wert;
+        //boolean right_weiss = light_left > weiss_wert;
+        boolean left_weiss = light_right < weiss_wert;
+        boolean right_weiss = light_left < weiss_wert;
         
 		if(left_weiss && !right_weiss) {
 			links.stop();
@@ -181,7 +187,7 @@ public static void linie_folgen(){
 			
 			//Delay.msDelay(2000);
 			
-			if(forwardAndCheck(2000)) {
+			if(forwardAndCheck(1000)) {
 				//isStopped = true;
 				//continue;
 				//isSearching = false;
@@ -220,7 +226,7 @@ public static void linie_folgen(){
 				
 				//Delay.msDelay(4000);
 				
-				if(forwardAndCheck(4000)) {
+				if(forwardAndCheck(2000)) {
 					//isStopped = true;
 					//continue;
 					//isSearching = false;
@@ -244,8 +250,12 @@ public static void linie_folgen(){
 			light_right=light.getLightValue();			
 			light_left=light2.getLightValue();
 
-            boolean left_weiss = light_right > weiss_wert;
-            boolean right_weiss = light_left > weiss_wert;
+			LCD.drawInt(light_left, 1, 1);
+			
+            //boolean left_weiss = light_right > weiss_wert;
+            //boolean right_weiss = light_left > weiss_wert;
+            boolean left_weiss = light_right < weiss_wert;
+            boolean right_weiss = light_left < weiss_wert;
             
             if(right_weiss && !left_weiss){
             	rechts.forward();
