@@ -34,7 +34,7 @@ public class LineRider {
            init_motoren(default_motor_strength);
     
            Button.waitForAnyPress();
-           
+
            linie_folgen();
 }
 public static void init_motoren(int speed){
@@ -51,8 +51,8 @@ public static void forward(int ms) {
 	
 	Delay.msDelay(ms);
 	
-	links.stop();
-	rechts.stop();
+	//links.stop();
+	//rechts.stop();
 }
 
 public static void backward(int ms) {
@@ -61,8 +61,8 @@ public static void backward(int ms) {
 	
 	Delay.msDelay(ms);
 	
-	links.stop();
-	rechts.stop();
+	//links.stop();
+	//rechts.stop();
 }
 
 public static boolean forwardAndCheck(int ms) {
@@ -81,8 +81,8 @@ public static boolean forwardAndCheck(int ms) {
         boolean right_weiss = light_left < weiss_wert;
         
 		if(left_weiss && !right_weiss) {
-			links.stop();
-			rechts.stop();
+			//links.stop();
+			//rechts.stop();
 			
 			return true;
 		}
@@ -98,8 +98,8 @@ public static boolean forwardAndCheck(int ms) {
 		remainingMs -= 50;
 	}
 	
-	links.stop();
-	rechts.stop();
+	//links.stop();
+	//rechts.stop();
 	
 	return false;
 }
@@ -119,8 +119,8 @@ public static void forwardUntilDark() {
         boolean right_weiss = light_left < weiss_wert;
         
 		if(left_weiss && !right_weiss) {
-			links.stop();
-			rechts.stop();
+			//links.stop();
+			//rechts.stop();
 			
 			return;
 		}
@@ -264,31 +264,19 @@ public static void linie_folgen(){
             boolean right_weiss = light_left < weiss_wert;
             
             if(right_weiss && !left_weiss){
-            	//links.setSpeed(default_motor_strength / 4);
-            	//rechts.setSpeed(default_motor_strength);
-            	//links.forward();
-            	//rechts.forward();
             	rechts.forward();
             	links.stop();
             } else if(right_weiss && left_weiss){
-            	//links.setSpeed(default_motor_strength);
-            	//rechts.setSpeed(default_motor_strength / 4);
-            	//links.forward();
-            	//rechts.forward();
                 links.forward();
                 rechts.stop();
             } else if(!right_weiss && !left_weiss){
-            	//links.setSpeed(default_motor_strength);
-            	//rechts.setSpeed(default_motor_strength);
-            	//links.backward();
-            	//rechts.stop();
             	rechts.stop();
             	links.backward();
 
         	}
             // linie gefunden
             else{                        //wenn nicht weiß nach links drehen
-            	//Sound.beepSequence();
+            	Sound.beep();
             	forward(150);
             }
 		}
