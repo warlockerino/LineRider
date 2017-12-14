@@ -4,6 +4,7 @@ import lejos.nxt.LightSensor;
 import lejos.nxt.MotorPort;
 import lejos.nxt.NXTRegulatedMotor;
 import lejos.nxt.SensorPort;
+import lejos.nxt.Sound;
 import lejos.nxt.UltrasonicSensor;
 import lejos.nxt.addon.ColorHTSensor;
 import lejos.robotics.Color;
@@ -20,6 +21,7 @@ public class LineRider {
     static int light_left=-1;
     static int weiss_wert=45;
     //static int weiss_wert=200;
+    static int default_motor_strength = 200;
 
     public static void main(String[] args) throws InterruptedException{
     	//while(!Button.ENTER.isPressed()){
@@ -29,7 +31,7 @@ public class LineRider {
            LCD.clear();
            light.setFloodlight(true);
            light2.setFloodlight(true);
-           init_motoren(150);
+           init_motoren(default_motor_strength);
     
            Button.waitForAnyPress();
            
@@ -200,6 +202,7 @@ public static void linie_folgen(){
 			
 			// weg frei
 			if(sonic.getDistance()>=15) {
+				
 				// extraplatz verschaffen 
 				rotateLeft();
 				
@@ -225,7 +228,7 @@ public static void linie_folgen(){
 				//rechts.forward();
 				
 				//Delay.msDelay(4000);
-				
+				Sound.twoBeeps();
 				if(forwardAndCheck(2000)) {
 					//isStopped = true;
 					//continue;
@@ -242,7 +245,10 @@ public static void linie_folgen(){
 				//continue;
 			}
 		} else {
+            init_motoren(default_motor_strength);
+            
 			if(sonic.getDistance()<=15) {
+				Sound.beep();
 				isSearching = true;
 				continue;
 			}
@@ -250,7 +256,7 @@ public static void linie_folgen(){
 			light_right=light.getLightValue();			
 			light_left=light2.getLightValue();
 
-			LCD.drawInt(light_left, 1, 1);
+			//LCD.drawInt(light_left, 1, 1);
 			
             //boolean left_weiss = light_right > weiss_wert;
             //boolean right_weiss = light_left > weiss_wert;
@@ -258,18 +264,31 @@ public static void linie_folgen(){
             boolean right_weiss = light_left < weiss_wert;
             
             if(right_weiss && !left_weiss){
+            	//links.setSpeed(default_motor_strength / 4);
+            	//rechts.setSpeed(default_motor_strength);
+            	//links.forward();
+            	//rechts.forward();
             	rechts.forward();
             	links.stop();
             } else if(right_weiss && left_weiss){
+            	//links.setSpeed(default_motor_strength);
+            	//rechts.setSpeed(default_motor_strength / 4);
+            	//links.forward();
+            	//rechts.forward();
                 links.forward();
                 rechts.stop();
             } else if(!right_weiss && !left_weiss){
+            	//links.setSpeed(default_motor_strength);
+            	//rechts.setSpeed(default_motor_strength);
+            	//links.backward();
+            	//rechts.stop();
             	rechts.stop();
             	links.backward();
 
         	}
             // linie gefunden
             else{                        //wenn nicht weiß nach links drehen
+            	//Sound.beepSequence();
             	forward(150);
             }
 		}
