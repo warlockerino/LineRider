@@ -25,8 +25,22 @@ public class LineRider {
     static int weiss_wert=51;
     //static int weiss_wert=200;
     static int default_motor_strength = 200;
-
+    static int distance_threshold_value = 100;
+    
+    public static void runUltraSonicTest() {
+    	while(true) {
+    		LCD.clear();
+    		//sonic_left.getDistance()<=15 || sonic_right.getDistance()<=15
+    		//LCD.drawInt(sonic_left.getDistance(), 1, 1);
+    		//LCD.drawInt(sonic_right.getDistance(), 8, 1);
+    		LCD.drawString(Integer.toString(sonic_left.getDistance()), 0, 1);
+    		LCD.drawString(Integer.toString(sonic_right.getDistance()), 0, 2);  
+    		Delay.msDelay(500);
+    	}
+    }
+    
     public static void main(String[] args) throws InterruptedException{
+    	 //runUltraSonicTest();
     	//while(!Button.ENTER.isPressed()){
           //        Thread.sleep(1000);
            //}
@@ -46,7 +60,7 @@ public class LineRider {
 //           pilot.setTravelSpeed(100);
            pilot.setTravelSpeed(120);
            Button.waitForAnyPress();
-
+           runUltraSonicTest();
            //pilot.forward();
            
            //Delay.msDelay(2000);
@@ -122,20 +136,10 @@ public static boolean forwardAndCheck(int ms) {
 
         //boolean left_weiss = light_right > weiss_wert;
         //boolean right_weiss = light_left > weiss_wert;
-		boolean left_weiss = light_right < weiss_wert;
-        boolean right_weiss = light_left < weiss_wert;
+		boolean leftIsLineColor = light_right < weiss_wert; //left_weiss
+        boolean rightIsLineColor = light_left < weiss_wert;
         
-		if(left_weiss && !right_weiss) {
-			//links.stop();
-			//rechts.stop();
-			pilot.stop();
-			
-			return true;
-		}
-		
-		if(!left_weiss && !right_weiss) {
-			//links.backward();
-			//rechts.forward();
+		if(leftIsLineColor || rightIsLineColor) {
 			pilot.rotate(15);
 			
 			return true;
@@ -191,23 +195,20 @@ public static void forwardUntilDark() {
 }
 
 public static void rotateLeft() {
-	//links.rotate(-180, true);
-	//rechts.rotate(180);
 	pilot.rotate(90);
 }
 
 public static void rotateRight() {
-	//links.rotate(180, true);
-	//rechts.rotate(-180);
 	pilot.rotate(-90);
 }
 
+public static boolean isLineColor(int colorValue) {
+	return colorValue < weiss_wert;
+}
+
 public static void handleSearchEnd() {
-	//links.stop();
-	//rechts.stop();
 	pilot.stop();
 	isSearching = false;
-	//Button.waitForAnyPress();
 	
 	backward(100);
 	
@@ -234,7 +235,7 @@ public static void linie_folgen(){
 			// Nach links umfahren
 			
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
-			while(sonic_left.getDistance()<=15 || sonic_right.getDistance()<=15) {
+			while(sonic_left.getDistance()<=distance_threshold_value || sonic_right.getDistance()<=distance_threshold_value) {
 				rotateLeft();
 				forwardTimed(1000);
 				rotateRight();
@@ -244,19 +245,15 @@ public static void linie_folgen(){
 			
 			// Etwas vorwärts fahren und nach rechts zum Objekt hin drehen
 			
-			forwardTimed(1000);
+			forwardTimed(2000);
 			rotateRight();
 			
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
-			while(sonic_left.getDistance()<=15 || sonic_right.getDistance()<=15) {
+			while(sonic_left.getDistance()<=distance_threshold_value || sonic_right.getDistance()<=distance_threshold_value) {
 
 				rotateLeft();
 				forwardTimed(1000);
 				if(forwardAndCheck(500)) {
-					//isStopped = true;
-					//continue;
-					//isSearching = false;
-					//backward(100);
 					handleSearchEnd();
 					break;
 				}
@@ -268,7 +265,7 @@ public static void linie_folgen(){
 		} else {
             //init_motoren(default_motor_strength);
             
-			if(sonic_left.getDistance()<=15 || sonic_right.getDistance()<=15) {
+			if(sonic_left.getDistance()<=distance_threshold_value || sonic_right.getDistance()<=distance_threshold_value) {
 				Sound.beep();
 				isSearching = true;
 				continue;
