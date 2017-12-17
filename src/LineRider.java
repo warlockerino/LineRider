@@ -27,8 +27,11 @@ public class LineRider {
     static int distance_threshold_value = 15;
     
     private static boolean isStopped = false;
-    private static boolean isSearching = false;
+    private static boolean isSearchingLeft = false;
+    private static boolean isSearchingRight = false;
     private static boolean isMovingToExit = false;
+    
+    private static boolean isLeftGuided = true;
     
     public static void runUltraSonicTest() {
     	while(true) {
@@ -166,7 +169,14 @@ public static boolean isLineColor(int colorValue) {
 
 public static void handleSearchEnd() {
 	pilot.stop();
-	isSearching = false;
+	
+	if(isSearchingLeft) {
+		isLeftGuided = true;
+		isSearchingLeft = false;
+	} else {
+		isLeftGuided = false;
+		isSearchingRight = false;		
+	}
 	
 	backward(100);
 	
@@ -198,7 +208,7 @@ public static void linie_folgen(){
 				return;
 			}
 		}
-		else if(isSearching) {
+		else if(isSearchingLeft) {
 			// Nach links umfahren
 
 			Sound.beep();
@@ -233,25 +243,110 @@ public static void linie_folgen(){
 				//forwardTimed(1000);
 				rotateRight();
 			}
+		} else if(isSearchingRight) {
+			// Nach links umfahren
+
+			Sound.beep();
+			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
+			while(hindernisErkannt()) {
+				rotateRight();
+				forwardTimed(1500);
+				rotateLeft();
+			}
+			
+			// Etwas vorwärts fahren und nach rechts zum Objekt hin drehen
+			
+			//forwardTimed(2000);
+			if(forwardAndCheck(2000)) {
+				Sound.buzz();
+				handleSearchEnd();
+				continue;
+			}
+			rotateLeft();
+			
+			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
+			while(hindernisErkannt()) {
+				Sound.beep();
+				rotateRight();
+				//forwardTimed(1000);
+				if(forwardAndCheck(1500)) { //false && 
+					Sound.buzz();
+					//return;
+					handleSearchEnd();
+					break;
+				}
+				//forwardTimed(1000);
+				rotateLeft();
+			}
 		} else {
 			if(sonic_left.getDistance()<=distance_threshold_value || sonic_right.getDistance()<=distance_threshold_value) {
-				isSearching = true;
-				continue;
+				Sound.buzz();
+				
+				/*int testRotateAngle = 35;
+				
+				// try left
+				pilot.rotate(testRotateAngle);
+				int leftTestValue = sonic_left.getDistance();
+				if(leftTestValue > 200) {
+					isSearchingLeft = true;
+					pilot.rotate(-testRotateAngle);
+					continue;
+				}
+				pilot.rotate(-testRotateAngle);
+				// try right
+				pilot.rotate(-testRotateAngle);
+				int rightTestValue = sonic_right.getDistance();
+				if(rightTestValue > 200) {
+					isSearchingRight = true;
+					pilot.rotate(testRotateAngle);
+					continue;
+				}
+				pilot.rotate(testRotateAngle);*/
+
+				//TODO: maybe drive back a bit?
+				
+				backward(500);
+				
+				int testRotateAngle = 35;
+				
+				pilot.rotate(testRotateAngle);
+				int leftTestValue = sonic_left.getDistance();
+				pilot.rotate(-testRotateAngle * 2);
+				int rightTestValue = sonic_right.getDistance();
+				pilot.rotate(testRotateAngle);
+				
+				//LCD.clear();
+				//LCD.drawInt(leftTestValue, 0, 1);
+				//LCD.drawInt(rightTestValue, 0, 2);
+				//Button.waitForAnyPress();
+				
+				// try left
+				if(rightTestValue > leftTestValue) {
+					isSearchingRight = true;
+					continue;
+				} else {
+					// defaulting to right
+					isSearchingLeft = true;
+					continue;
+				}
 			}
 
             boolean leftIsLineColor = isLeftLineColor();
             boolean rightIsLineColor = isRightLineColor();
             
-            followLineLeftSide(leftIsLineColor, rightIsLineColor);
-            //followLineRightSide(leftIsLineColor, rightIsLineColor);
+            if(isLeftGuided)
+            	followLineLeftSide(leftIsLineColor, rightIsLineColor);
+            else
+            	followLineRightSide(leftIsLineColor, rightIsLineColor);
 		}
      }
   }
 
 public static int steerCount = 0;
+public static int steerCountThreshold = 10; // 12
 
 	public static void followLineLeftSide(boolean leftIsLineColor, boolean rightIsLineColor) {
-		if(steerCount > 10) { //12
+		if(steerCount > steerCountThreshold) {
 			Sound.buzz();
 			isMovingToExit = true;
 			while(true) {
@@ -290,19 +385,41 @@ public static int steerCount = 0;
 	}
 	
 	public static void followLineRightSide(boolean leftIsLineColor, boolean rightIsLineColor) {
+		if(steerCount > steerCountThreshold) {
+			Sound.buzz();
+			isMovingToExit = true;
+			while(true) {
+				pilot.steer(200);
+	        	Delay.msDelay(30);
+	        	
+	        	leftIsLineColor = isLeftLineColor(); //left_weiss
+	            rightIsLineColor = isRightLineColor();
+	            
+	            if(leftIsLineColor && !rightIsLineColor) {
+	    			pilot.rotate(180);
+	            	
+	            	return;
+	            }
+			}
+		}
+		
 		if(!rightIsLineColor && leftIsLineColor){
+			steerCount = 0;
         	pilot.steer(200);
         	Delay.msDelay(30);           	
         } else if(rightIsLineColor && leftIsLineColor){
+        	steerCount = 0;
         	pilot.steerBackward(200);
         	Delay.msDelay(30);
         	//pilot.forward();
         } else if(!rightIsLineColor && !leftIsLineColor){
+        	steerCount++;
         	pilot.steer(200); // nach rechts drehen
         	Delay.msDelay(30);
     	}
         // linie gefunden
         else{
+        	steerCount = 0;
             pilot.forward();
         }
 	}
