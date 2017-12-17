@@ -13,9 +13,7 @@ import lejos.robotics.navigation.DifferentialPilot;
 import lejos.util.Delay;
 
 
-public class LineRider { 
-	//static NXTRegulatedMotor links = new NXTRegulatedMotor(MotorPort.B);
-    //static NXTRegulatedMotor rechts = new NXTRegulatedMotor(MotorPort.A);
+public class LineRider {
     static DifferentialPilot pilot;
     static UltrasonicSensor sonic_right = new UltrasonicSensor(SensorPort.S1);
     static UltrasonicSensor sonic_left = new UltrasonicSensor(SensorPort.S4);    
@@ -27,15 +25,14 @@ public class LineRider {
     //static int weiss_wert=200;
     static int default_motor_strength = 200;
     static int distance_threshold_value = 15;
-    //static TouchSensor leftTouchSensor = new TouchSensor(SensorPort.S4);
-    //static TouchSensor rightTouchSensor = new TouchSensor(SensorPort.S1);
+    
+    private static boolean isStopped = false;
+    private static boolean isSearching = false;
+    private static boolean isMovingToExit = false;
     
     public static void runUltraSonicTest() {
     	while(true) {
     		LCD.clear();
-    		//sonic_left.getDistance()<=15 || sonic_right.getDistance()<=15
-    		//LCD.drawInt(sonic_left.getDistance(), 1, 1);
-    		//LCD.drawInt(sonic_right.getDistance(), 8, 1);
     		LCD.drawString(Integer.toString(sonic_left.getDistance()), 0, 1);
     		LCD.drawString(Integer.toString(sonic_right.getDistance()), 0, 2);  
     		Delay.msDelay(500);
@@ -44,88 +41,43 @@ public class LineRider {
     
     public static void runLightSensorTest() {
     	while(true) {
-    		//LCD.clear();
     		Button.waitForAnyPress();
     		LCD.drawString(Integer.toString(light.getLightValue()), 0, 1);
-    		//LCD.drawString(Integer.toString(light2.getLightValue()), 1, 2);
     	}
     }
     
     public static void main(String[] args) throws InterruptedException{
-    	 //runUltraSonicTest();
-    	//while(!Button.ENTER.isPressed()){
-          //        Thread.sleep(1000);
-           //}
-    
            LCD.clear();
            light.setFloodlight(true);
            light2.setFloodlight(true);
-           //init_motoren(default_motor_strength);
     
-           //135
            NXTRegulatedMotor links = new NXTRegulatedMotor(MotorPort.B);
            NXTRegulatedMotor rechts = new NXTRegulatedMotor(MotorPort.A);
            links.setSpeed(default_motor_strength);
            rechts.setSpeed(default_motor_strength);
            pilot = new DifferentialPilot(56, 56, 115, links, rechts, false);
            pilot.setRotateSpeed(180);
-//           pilot.setTravelSpeed(100);
            pilot.setTravelSpeed(120);
            //Button.waitForAnyPress();
            //runLightSensorTest();
            //runUltraSonicTest();
-           //pilot.forward();
-           
-           //Delay.msDelay(2000);
-           
-           //pilot.stop();
-           
-           /*pilot.rotate(90);
-           
-           Delay.msDelay(1000);
-           
-           pilot.rotate(90);
-           
-           Delay.msDelay(1000);
-           
-           pilot.rotate(90);
-           
-           Delay.msDelay(1000);
-           
-           pilot.rotate(90);*/
-           
+
            linie_folgen();
 }
-public static void init_motoren(int speed){
-            //links.setSpeed(speed);
-            //rechts.setSpeed(speed);
-    }
-
-private static boolean isStopped = false;
-private static boolean isSearching = false;
-private static boolean isMovingToExit = false;
 
 public static void forward(int ms) {
-	//links.forward();
-	//rechts.forward();
 	pilot.forward();
 	
 	Delay.msDelay(ms);
 	
-	//links.stop();
-	//rechts.stop();
 	pilot.stop();
 }
 
 public static void backward(int ms) {
-	//links.backward();
-	//rechts.backward();
 	pilot.backward();
 	
 	Delay.msDelay(ms);
 	
-	//links.stop();
-	//rechts.stop();
 	pilot.stop();
 }
 
@@ -140,7 +92,6 @@ public static void forwardTimed(int ms) {
 static final int foo = 20;
 
 public static boolean forwardAndCheck(int ms) {
-	
 	int remainingMs = ms;
 	
 	pilot.forward();
@@ -236,8 +187,6 @@ public static void linie_folgen(){
 	while(true) {
 		// alles gestoppt, nichts mehr tun
 		if(isStopped) {
-			//links.stop();
-			//rechts.stop();
 			pilot.stop();
 			Delay.msDelay(1000);
 		}
@@ -250,7 +199,6 @@ public static void linie_folgen(){
 			}
 		}
 		else if(isSearching) {
-			
 			// Nach links umfahren
 
 			Sound.beep();
@@ -261,8 +209,6 @@ public static void linie_folgen(){
 				rotateRight();
 			}
 			
-			//Sound.buzz();
-			
 			// Etwas vorwärts fahren und nach rechts zum Objekt hin drehen
 			
 			//forwardTimed(2000);
@@ -270,9 +216,6 @@ public static void linie_folgen(){
 				Sound.buzz();
 				handleSearchEnd();
 				continue;
-				//isStopped = true;
-				//return;
-				//TODO: handleSearchEnd etc.?
 			}
 			rotateRight();
 			
@@ -290,24 +233,15 @@ public static void linie_folgen(){
 				//forwardTimed(1000);
 				rotateRight();
 			}
-			
-			//Sound.buzz();
-			
 		} else {
-            //init_motoren(default_motor_strength);
-            
 			if(sonic_left.getDistance()<=distance_threshold_value || sonic_right.getDistance()<=distance_threshold_value) {
 				isSearching = true;
 				continue;
 			}
 
-            boolean leftIsLineColor = isLeftLineColor(); //left_weiss
+            boolean leftIsLineColor = isLeftLineColor();
             boolean rightIsLineColor = isRightLineColor();
             
-            //LCD.drawInt(light_right, 1, 3); //57 nicht-linie, 49 linie
-
-			//forwardTimed(1000);
-            //forwardAndCheck(10000);
             followLineLeftSide(leftIsLineColor, rightIsLineColor);
             //followLineRightSide(leftIsLineColor, rightIsLineColor);
 		}
