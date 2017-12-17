@@ -5,6 +5,7 @@ import lejos.nxt.MotorPort;
 import lejos.nxt.NXTRegulatedMotor;
 import lejos.nxt.SensorPort;
 import lejos.nxt.Sound;
+import lejos.nxt.TouchSensor;
 import lejos.nxt.UltrasonicSensor;
 import lejos.nxt.addon.ColorHTSensor;
 import lejos.robotics.Color;
@@ -25,9 +26,11 @@ public class LineRider {
     static int weiss_wert=51;
     //static int weiss_wert=200;
     static int default_motor_strength = 200;
-    static int distance_threshold_value = 100;
+    static int distance_threshold_value = 15;
+    //static TouchSensor leftTouchSensor = new TouchSensor(SensorPort.S4);
+    //static TouchSensor rightTouchSensor = new TouchSensor(SensorPort.S1);
     
-    public static void runUltraSonicTest() {
+    /*public static void runUltraSonicTest() {
     	while(true) {
     		LCD.clear();
     		//sonic_left.getDistance()<=15 || sonic_right.getDistance()<=15
@@ -37,7 +40,7 @@ public class LineRider {
     		LCD.drawString(Integer.toString(sonic_right.getDistance()), 0, 2);  
     		Delay.msDelay(500);
     	}
-    }
+    }*/
     
     public static void main(String[] args) throws InterruptedException{
     	 //runUltraSonicTest();
@@ -60,7 +63,7 @@ public class LineRider {
 //           pilot.setTravelSpeed(100);
            pilot.setTravelSpeed(120);
            Button.waitForAnyPress();
-           runUltraSonicTest();
+           //runUltraSonicTest();
            //pilot.forward();
            
            //Delay.msDelay(2000);
@@ -254,6 +257,7 @@ public static void linie_folgen(){
 				rotateLeft();
 				forwardTimed(1000);
 				if(forwardAndCheck(500)) {
+					Sound.buzz();
 					handleSearchEnd();
 					break;
 				}
@@ -337,4 +341,8 @@ public static void linie_folgen(){
             pilot.forward();
         }
 	}
+	
+	//public static boolean isTouched() {
+	//	return leftTouchSensor.isPressed() || rightTouchSensor.isPressed();
+	//}
 }
