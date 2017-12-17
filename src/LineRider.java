@@ -23,14 +23,14 @@ public class LineRider {
     static LightSensor light2 = new LightSensor(SensorPort.S2); // links
     static int light_right=-1;
     static int light_left=-1;
-    static int weiss_wert=51;
+    static int weiss_wert=49;//51
     //static int weiss_wert=200;
     static int default_motor_strength = 200;
     static int distance_threshold_value = 15;
     //static TouchSensor leftTouchSensor = new TouchSensor(SensorPort.S4);
     //static TouchSensor rightTouchSensor = new TouchSensor(SensorPort.S1);
     
-    /*public static void runUltraSonicTest() {
+    public static void runUltraSonicTest() {
     	while(true) {
     		LCD.clear();
     		//sonic_left.getDistance()<=15 || sonic_right.getDistance()<=15
@@ -40,7 +40,16 @@ public class LineRider {
     		LCD.drawString(Integer.toString(sonic_right.getDistance()), 0, 2);  
     		Delay.msDelay(500);
     	}
-    }*/
+    }
+    
+    public static void runLightSensorTest() {
+    	while(true) {
+    		//LCD.clear();
+    		Button.waitForAnyPress();
+    		LCD.drawString(Integer.toString(light.getLightValue()), 0, 1);
+    		//LCD.drawString(Integer.toString(light2.getLightValue()), 1, 2);
+    	}
+    }
     
     public static void main(String[] args) throws InterruptedException{
     	 //runUltraSonicTest();
@@ -63,6 +72,7 @@ public class LineRider {
 //           pilot.setTravelSpeed(100);
            pilot.setTravelSpeed(120);
            Button.waitForAnyPress();
+           //runLightSensorTest();
            //runUltraSonicTest();
            //pilot.forward();
            
@@ -134,15 +144,12 @@ public static boolean forwardAndCheck(int ms) {
 	pilot.forward();
 	
 	while(remainingMs > 0) {
-		light_right=light.getLightValue();			
-		light_left=light2.getLightValue();
-
-        //boolean left_weiss = light_right > weiss_wert;
-        //boolean right_weiss = light_left > weiss_wert;
-		boolean leftIsLineColor = light_right < weiss_wert; //left_weiss
-        boolean rightIsLineColor = light_left < weiss_wert;
+		boolean leftIsLineColor = isLeftLineColor();
+        boolean rightIsLineColor = isRightLineColor();
         
 		if(leftIsLineColor || rightIsLineColor) {
+			Sound.beepSequence();
+			pilot.stop();
 			pilot.rotate(15);
 			
 			return true;
@@ -164,15 +171,10 @@ public static void forwardUntilDark() {
 	pilot.forward();
 	
 	while(true) {
-		light_right=light.getLightValue();			
-		light_left=light2.getLightValue();
-
-        //boolean left_weiss = light_right > weiss_wert;
-        //boolean right_weiss = light_left > weiss_wert;
-        boolean left_weiss = light_right < weiss_wert;
-        boolean right_weiss = light_left < weiss_wert;
+        boolean leftIsLineColor = isLeftLineColor(); //left_weiss
+        boolean rightIsLineColor = isRightLineColor();
         
-		if(left_weiss && !right_weiss) {
+		if(leftIsLineColor && !rightIsLineColor) {
 			//links.stop();
 			//rechts.stop();
 			pilot.stop();
@@ -180,7 +182,7 @@ public static void forwardUntilDark() {
 			return;
 		}
 		
-		if(!left_weiss && !right_weiss) {
+		if(!leftIsLineColor && !rightIsLineColor) {
 			//##links.backward();
 			//##rechts.forward();
 			pilot.rotate(15);
@@ -188,7 +190,7 @@ public static void forwardUntilDark() {
 			return;
 		}
 		
-		if(!left_weiss && right_weiss) {
+		if(!leftIsLineColor && rightIsLineColor) {
 			//##links.backward();
 			pilot.rotate(15);
 			
@@ -206,7 +208,8 @@ public static void rotateRight() {
 }
 
 public static boolean isLineColor(int colorValue) {
-	return colorValue < weiss_wert;
+	//return colorValue < weiss_wert;
+	return colorValue > weiss_wert;
 }
 
 public static void handleSearchEnd() {
@@ -224,6 +227,10 @@ public static void handleSearchEnd() {
 	forwardUntilDark();
 }
 
+public static boolean hindernisErkannt() {
+	return sonic_left.getDistance()<=distance_threshold_value || sonic_right.getDistance()<=distance_threshold_value;
+}
+
 public static void linie_folgen(){     
 	while(true) {
 		// alles gestoppt, nichts mehr tun
@@ -238,7 +245,7 @@ public static void linie_folgen(){
 			// Nach links umfahren
 			
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
-			while(sonic_left.getDistance()<=distance_threshold_value || sonic_right.getDistance()<=distance_threshold_value) {
+			while(hindernisErkannt()) {
 				rotateLeft();
 				forwardTimed(1000);
 				rotateRight();
@@ -252,10 +259,10 @@ public static void linie_folgen(){
 			rotateRight();
 			
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
-			while(sonic_left.getDistance()<=distance_threshold_value || sonic_right.getDistance()<=distance_threshold_value) {
-
+			while(hindernisErkannt()) {
+				Sound.beep();
 				rotateLeft();
-				forwardTimed(1000);
+				//forwardTimed(1000);
 				if(forwardAndCheck(500)) {
 					Sound.buzz();
 					handleSearchEnd();
@@ -274,12 +281,9 @@ public static void linie_folgen(){
 				isSearching = true;
 				continue;
 			}
-			
-			light_right = light.getLightValue();			
-			light_left = light2.getLightValue();
 
-            boolean leftIsLineColor = light_right < weiss_wert; //left_weiss
-            boolean rightIsLineColor = light_left < weiss_wert;
+            boolean leftIsLineColor = isLeftLineColor(); //left_weiss
+            boolean rightIsLineColor = isRightLineColor();
             
             //LCD.drawInt(light_right, 1, 3); //57 nicht-linie, 49 linie
             
@@ -342,7 +346,13 @@ public static void linie_folgen(){
         }
 	}
 	
-	//public static boolean isTouched() {
-	//	return leftTouchSensor.isPressed() || rightTouchSensor.isPressed();
-	//}
+	public static boolean isLeftLineColor() {
+		light_left = light.getLightValue();
+		return isLineColor(light_left);
+	}
+	
+	public static boolean isRightLineColor() {
+		light_right = light2.getLightValue();	
+		return isLineColor(light_right);
+	}
 }
