@@ -254,12 +254,6 @@ public static int steerCount = 0;
 		if(steerCount > 10) { //12
 			Sound.buzz();
 			isMovingToExit = true;
-/*			while(steerCount > 0) {
-				//pilot.steerBackward(-200);
-				pilot.steer(200);
-				Delay.msDelay(30);
-				steerCount--;
-			}*/
 			while(true) {
 				pilot.steer(-200);
 	        	Delay.msDelay(30);
@@ -273,46 +267,25 @@ public static int steerCount = 0;
 	            	return;
 	            }
 			}
-			
-			//return;
 		}
 		
 		if(rightIsLineColor && !leftIsLineColor){
 			steerCount = 0;
-        	//##rechts.forward();
-        	//##links.stop();
         	pilot.steer(-200);
-        	Delay.msDelay(30);
-        	//pilot.rotate(5);
-        	//pilot.forward();
-        	//Delay.msDelay(50);            	
+        	Delay.msDelay(30);           	
         } else if(rightIsLineColor && leftIsLineColor){
         	steerCount = 0;
-            //##links.forward();
-            //##rechts.stop();
-        	//pilot.steer(100);
         	pilot.steerBackward(-200);
         	Delay.msDelay(30);
-        	//pilot.forward();
         } else if(!rightIsLineColor && !leftIsLineColor){
-        	
         	steerCount++;
-        	//##rechts.stop();
-        	//##links.backward();
-        	//pilot.steerBackward(100);
         	pilot.steer(-200); // nach links drehen
         	Delay.msDelay(30);
-        	//pilot.rotate(-5);
-        	//pilot.forward();
-        	//Delay.msDelay(50);
     	}
         // linie gefunden
         else{                        //wenn nicht weiﬂ nach links drehen
-        	//Sound.beep();
-        	//##forward(150);
         	steerCount = 0;
             pilot.forward();
-        	//pilot.steerBackward(200);
         }
 	}
 	
