@@ -23,7 +23,7 @@ public class LineRider {
     static LightSensor light2 = new LightSensor(SensorPort.S2); // links
     static int light_right=-1;
     static int light_left=-1;
-    static int weiss_wert=49;//51
+    static int weiss_wert=51;//51
     //static int weiss_wert=200;
     static int default_motor_strength = 200;
     static int distance_threshold_value = 15;
@@ -71,7 +71,7 @@ public class LineRider {
            pilot.setRotateSpeed(180);
 //           pilot.setTravelSpeed(100);
            pilot.setTravelSpeed(120);
-           Button.waitForAnyPress();
+           //Button.waitForAnyPress();
            //runLightSensorTest();
            //runUltraSonicTest();
            //pilot.forward();
@@ -103,6 +103,7 @@ public static void init_motoren(int speed){
 
 private static boolean isStopped = false;
 private static boolean isSearching = false;
+private static boolean isMovingToExit = false;
 
 public static void forward(int ms) {
 	//links.forward();
@@ -136,11 +137,12 @@ public static void forwardTimed(int ms) {
 	pilot.stop();
 }
 
+static final int foo = 20;
+
 public static boolean forwardAndCheck(int ms) {
+	
 	int remainingMs = ms;
 	
-	//links.forward();
-	//rechts.forward();
 	pilot.forward();
 	
 	while(remainingMs > 0) {
@@ -150,22 +152,21 @@ public static boolean forwardAndCheck(int ms) {
 		if(leftIsLineColor || rightIsLineColor) {
 			Sound.beepSequence();
 			pilot.stop();
-			pilot.rotate(15);
+			//pilot.rotate(15);
 			
 			return true;
 		}
 		
-		Delay.msDelay(50);
-		remainingMs -= 50;
+		Delay.msDelay(foo);
+		remainingMs -= foo;
 	}
 	
-	//links.stop();
-	//rechts.stop();
+	pilot.stop();
 	
 	return false;
 }
 
-public static void forwardUntilDark() {
+public static void forwardUntilLine() {
 	//links.forward();
 	//rechts.forward();
 	pilot.forward();
@@ -208,8 +209,8 @@ public static void rotateRight() {
 }
 
 public static boolean isLineColor(int colorValue) {
-	//return colorValue < weiss_wert;
-	return colorValue > weiss_wert;
+	return colorValue < weiss_wert;
+	//return colorValue > weiss_wert;
 }
 
 public static void handleSearchEnd() {
@@ -224,7 +225,7 @@ public static void handleSearchEnd() {
 	//links.rotate(-90, true);
 	//rechts.rotate(90);
 	
-	forwardUntilDark();
+	//forwardUntilLine();
 }
 
 public static boolean hindernisErkannt() {
@@ -240,14 +241,23 @@ public static void linie_folgen(){
 			pilot.stop();
 			Delay.msDelay(1000);
 		}
+		else if(isMovingToExit) {
+			pilot.forward();
+			
+			if(hindernisErkannt()) {
+				pilot.stop();
+				return;
+			}
+		}
 		else if(isSearching) {
 			
 			// Nach links umfahren
-			
+
+			Sound.beep();
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
 			while(hindernisErkannt()) {
 				rotateLeft();
-				forwardTimed(1000);
+				forwardTimed(1500);
 				rotateRight();
 			}
 			
@@ -255,7 +265,15 @@ public static void linie_folgen(){
 			
 			// Etwas vorw‰rts fahren und nach rechts zum Objekt hin drehen
 			
-			forwardTimed(2000);
+			//forwardTimed(2000);
+			if(forwardAndCheck(2000)) {
+				Sound.buzz();
+				handleSearchEnd();
+				continue;
+				//isStopped = true;
+				//return;
+				//TODO: handleSearchEnd etc.?
+			}
 			rotateRight();
 			
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
@@ -263,11 +281,13 @@ public static void linie_folgen(){
 				Sound.beep();
 				rotateLeft();
 				//forwardTimed(1000);
-				if(forwardAndCheck(500)) {
+				if(forwardAndCheck(1500)) { //false && 
 					Sound.buzz();
+					//return;
 					handleSearchEnd();
 					break;
 				}
+				//forwardTimed(1000);
 				rotateRight();
 			}
 			
@@ -277,7 +297,6 @@ public static void linie_folgen(){
             //init_motoren(default_motor_strength);
             
 			if(sonic_left.getDistance()<=distance_threshold_value || sonic_right.getDistance()<=distance_threshold_value) {
-				Sound.beep();
 				isSearching = true;
 				continue;
 			}
@@ -286,15 +305,46 @@ public static void linie_folgen(){
             boolean rightIsLineColor = isRightLineColor();
             
             //LCD.drawInt(light_right, 1, 3); //57 nicht-linie, 49 linie
-            
+
+			//forwardTimed(1000);
+            //forwardAndCheck(10000);
             followLineLeftSide(leftIsLineColor, rightIsLineColor);
             //followLineRightSide(leftIsLineColor, rightIsLineColor);
 		}
      }
   }
 
+public static int steerCount = 0;
+
 	public static void followLineLeftSide(boolean leftIsLineColor, boolean rightIsLineColor) {
+		if(steerCount > 10) { //12
+			Sound.buzz();
+			isMovingToExit = true;
+/*			while(steerCount > 0) {
+				//pilot.steerBackward(-200);
+				pilot.steer(200);
+				Delay.msDelay(30);
+				steerCount--;
+			}*/
+			while(true) {
+				pilot.steer(-200);
+	        	Delay.msDelay(30);
+	        	
+	        	leftIsLineColor = isLeftLineColor(); //left_weiss
+	            rightIsLineColor = isRightLineColor();
+	            
+	            if(!leftIsLineColor && rightIsLineColor) {
+	    			pilot.rotate(180);
+	            	
+	            	return;
+	            }
+			}
+			
+			//return;
+		}
+		
 		if(rightIsLineColor && !leftIsLineColor){
+			steerCount = 0;
         	//##rechts.forward();
         	//##links.stop();
         	pilot.steer(-200);
@@ -303,6 +353,7 @@ public static void linie_folgen(){
         	//pilot.forward();
         	//Delay.msDelay(50);            	
         } else if(rightIsLineColor && leftIsLineColor){
+        	steerCount = 0;
             //##links.forward();
             //##rechts.stop();
         	//pilot.steer(100);
@@ -310,6 +361,8 @@ public static void linie_folgen(){
         	Delay.msDelay(30);
         	//pilot.forward();
         } else if(!rightIsLineColor && !leftIsLineColor){
+        	
+        	steerCount++;
         	//##rechts.stop();
         	//##links.backward();
         	//pilot.steerBackward(100);
@@ -323,6 +376,7 @@ public static void linie_folgen(){
         else{                        //wenn nicht weiﬂ nach links drehen
         	//Sound.beep();
         	//##forward(150);
+        	steerCount = 0;
             pilot.forward();
         	//pilot.steerBackward(200);
         }
