@@ -49,6 +49,13 @@ public class LineRider {
     	}
     }
     
+    public static void runRotationTest() {
+    	while(true) {
+    		rotateLeft();
+    		Delay.msDelay(500);
+    	}
+    }
+    
     public static void main(String[] args) throws InterruptedException{
            LCD.clear();
            light.setFloodlight(true);
@@ -64,7 +71,7 @@ public class LineRider {
            //Button.waitForAnyPress();
            //runLightSensorTest();
            //runUltraSonicTest();
-
+           runRotationTest();
            linie_folgen();
 }
 
