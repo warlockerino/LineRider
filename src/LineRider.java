@@ -24,7 +24,7 @@ public class LineRider {
     static int weiss_wert=51;//51
     //static int weiss_wert=200;
     static int default_motor_strength = 200;
-    static int distance_threshold_value = 15;
+    static int distance_threshold_value = 16; //15
     
     private static boolean isStopped = false;
     private static boolean isSearchingLeft = false;
@@ -65,13 +65,13 @@ public class LineRider {
            NXTRegulatedMotor rechts = new NXTRegulatedMotor(MotorPort.A);
            links.setSpeed(default_motor_strength);
            rechts.setSpeed(default_motor_strength);
-           pilot = new DifferentialPilot(56, 56, 115, links, rechts, false);
-           pilot.setRotateSpeed(180);
+           pilot = new DifferentialPilot(56, 56, 115, links, rechts, false); //115  138
+           pilot.setRotateSpeed(90); //180
            pilot.setTravelSpeed(120);
            //Button.waitForAnyPress();
            //runLightSensorTest();
            //runUltraSonicTest();
-           runRotationTest();
+           //runRotationTest();
            linie_folgen();
 }
 
@@ -101,7 +101,11 @@ public static void forwardTimed(int ms) {
 
 static final int foo = 20;
 
-public static boolean forwardAndCheck(int ms) {
+public static final int FOUND_NOTHING = 0;
+public static final int FOUND_LINE = 16;
+public static final int FOUND_OBJECT = 32;
+
+public static int forwardAndCheck(int ms) {
 	int remainingMs = ms;
 	
 	pilot.forward();
@@ -115,7 +119,7 @@ public static boolean forwardAndCheck(int ms) {
 			pilot.stop();
 			//pilot.rotate(15);
 			
-			return true;
+			return FOUND_LINE;
 		}
 		
 		Delay.msDelay(foo);
@@ -124,7 +128,7 @@ public static boolean forwardAndCheck(int ms) {
 	
 	pilot.stop();
 	
-	return false;
+	return FOUND_OBJECT;
 }
 
 public static void forwardUntilLine() {
@@ -200,6 +204,10 @@ public static boolean hindernisErkannt() {
 	return sonic_left.getDistance()<=distance_threshold_value || sonic_right.getDistance()<=distance_threshold_value;
 }
 
+public static boolean hindernisErkanntLang() {
+	return sonic_left.getDistance()<=distance_threshold_value+5 || sonic_right.getDistance()<=distance_threshold_value+5;
+}
+
 public static void linie_folgen(){     
 	while(true) {
 		// alles gestoppt, nichts mehr tun
@@ -220,7 +228,7 @@ public static void linie_folgen(){
 
 			Sound.beep();
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
-			while(hindernisErkannt()) {
+			while(hindernisErkanntLang()) {
 				rotateLeft();
 				forwardTimed(1500);
 				rotateRight();
@@ -229,7 +237,8 @@ public static void linie_folgen(){
 			// Etwas vorwärts fahren und nach rechts zum Objekt hin drehen
 			
 			//forwardTimed(2000);
-			if(forwardAndCheck(2000)) {
+			int x = forwardAndCheck(2000);
+			if(x == FOUND_LINE) {
 				Sound.buzz();
 				handleSearchEnd();
 				continue;
@@ -237,11 +246,12 @@ public static void linie_folgen(){
 			rotateRight();
 			
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
-			while(hindernisErkannt()) {
+			while(hindernisErkanntLang()) {
 				Sound.beep();
 				rotateLeft();
 				//forwardTimed(1000);
-				if(forwardAndCheck(1500)) { //false && 
+				x = forwardAndCheck(1500);
+				if(x == FOUND_LINE) { //false && 
 					Sound.buzz();
 					//return;
 					handleSearchEnd();
@@ -255,7 +265,7 @@ public static void linie_folgen(){
 
 			Sound.beep();
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
-			while(hindernisErkannt()) {
+			while(hindernisErkanntLang()) {
 				rotateRight();
 				forwardTimed(1500);
 				rotateLeft();
@@ -264,7 +274,8 @@ public static void linie_folgen(){
 			// Etwas vorwärts fahren und nach rechts zum Objekt hin drehen
 			
 			//forwardTimed(2000);
-			if(forwardAndCheck(2000)) {
+			int x = forwardAndCheck(2000);
+			if(x == FOUND_LINE) {
 				Sound.buzz();
 				handleSearchEnd();
 				continue;
@@ -272,11 +283,12 @@ public static void linie_folgen(){
 			rotateLeft();
 			
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
-			while(hindernisErkannt()) {
+			while(hindernisErkanntLang()) {
 				Sound.beep();
 				rotateRight();
 				//forwardTimed(1000);
-				if(forwardAndCheck(1500)) { //false && 
+				x = forwardAndCheck(1500);
+				if(x == FOUND_LINE) { //false && 
 					Sound.buzz();
 					//return;
 					handleSearchEnd();
@@ -312,9 +324,10 @@ public static void linie_folgen(){
 
 				//TODO: maybe drive back a bit?
 				
-				backward(500);
+				backward(500); //500
 				
 				int testRotateAngle = 35;
+				//int testRotateAngle = 45;
 				
 				pilot.rotate(testRotateAngle);
 				int leftTestValue = sonic_left.getDistance();
@@ -322,10 +335,10 @@ public static void linie_folgen(){
 				int rightTestValue = sonic_right.getDistance();
 				pilot.rotate(testRotateAngle);
 				
-				//LCD.clear();
-				//LCD.drawInt(leftTestValue, 0, 1);
-				//LCD.drawInt(rightTestValue, 0, 2);
-				//Button.waitForAnyPress();
+				LCD.clear();
+				LCD.drawInt(leftTestValue, 0, 1);
+				LCD.drawInt(rightTestValue, 0, 2);
+				Button.waitForAnyPress();
 				
 				// try left
 				if(rightTestValue > leftTestValue) {
@@ -350,7 +363,7 @@ public static void linie_folgen(){
   }
 
 public static int steerCount = 0;
-public static int steerCountThreshold = 10; // 12
+public static int steerCountThreshold = 12; // 10 12
 
 	public static void followLineLeftSide(boolean leftIsLineColor, boolean rightIsLineColor) {
 		if(steerCount > steerCountThreshold) {
