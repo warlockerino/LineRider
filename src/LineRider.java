@@ -24,7 +24,7 @@ public class LineRider {
     static int weiss_wert=51;//51
     //static int weiss_wert=200;
     static int default_motor_strength = 200;
-    static int distance_threshold_value = 16; //15
+    static int distance_threshold_value = 17; //15
     
     private static boolean isStopped = false;
     private static boolean isSearchingLeft = false;
@@ -111,7 +111,7 @@ public static int forwardAndCheck(int ms) {
 	pilot.forward();
 	
 	while(remainingMs > 0) {
-		boolean leftIsLineColor = isLeftLineColor();
+		boolean leftIsLineColor  = isLeftLineColor();
         boolean rightIsLineColor = isRightLineColor();
         
 		if(leftIsLineColor || rightIsLineColor) {
@@ -174,8 +174,8 @@ public static void rotateRight() {
 }
 
 public static boolean isLineColor(int colorValue) {
-	return colorValue < weiss_wert;
-	//return colorValue > weiss_wert;
+	//return colorValue < weiss_wert;
+	return colorValue > weiss_wert;
 }
 
 public static void handleSearchEnd() {
@@ -188,6 +188,14 @@ public static void handleSearchEnd() {
 		isLeftGuided = false;
 		isSearchingRight = false;		
 	}
+	
+	// TODO verify search end turning direction
+	// i.e. (vllt condition vertauschen)
+	// if (isLeftGuided) {
+	//		pilot.rotate(70);
+	//	else
+	//		pilot.rotate(-70);
+	
 	
 	backward(100);
 	
@@ -205,7 +213,50 @@ public static boolean hindernisErkannt() {
 }
 
 public static boolean hindernisErkanntLang() {
-	return sonic_left.getDistance()<=distance_threshold_value+5 || sonic_right.getDistance()<=distance_threshold_value+5;
+	int leftValue = sonic_left.getDistance();
+	int rightValue = sonic_right.getDistance();
+	//LCD.clear();
+	//LCD.drawString(Integer.toString(leftValue), 0, 1);
+	//LCD.drawString(Integer.toString(rightValue), 0, 2);
+	//Button.waitForAnyPress();
+	return leftValue<=distance_threshold_value+5 || rightValue<=distance_threshold_value+5;
+}
+
+public static boolean hindernisErkanntLangBoth() {
+	int leftValue = sonic_left.getDistance();
+	int rightValue = sonic_right.getDistance();
+	//LCD.clear();
+	//LCD.drawString(Integer.toString(leftValue), 0, 1);
+	//LCD.drawString(Integer.toString(rightValue), 0, 2);
+	//Button.waitForAnyPress();
+	return leftValue<=distance_threshold_value+5 && rightValue<=distance_threshold_value+5;
+}
+
+public static boolean hindernisErkanntExtraLang() {
+	int leftValue = sonic_left.getDistance();
+	int rightValue = sonic_right.getDistance();
+	LCD.clear();
+	LCD.drawString(Integer.toString(leftValue), 0, 1);
+	LCD.drawString(Integer.toString(rightValue), 0, 2);
+	Button.waitForAnyPress();
+	return leftValue<=50 || rightValue<=50;
+}
+
+public static void ausrichten() {
+	int leftDistance  = sonic_left.getDistance();
+	int rightDistance = sonic_right.getDistance();
+	
+	while(leftDistance != rightDistance) {
+		if(leftDistance > 50 || rightDistance > 50)
+			break;
+		if (leftDistance > rightDistance) {
+			pilot.rotate(-8);
+		} else {
+			pilot.rotate(8);
+		}
+		leftDistance  = sonic_left.getDistance();
+		rightDistance = sonic_right.getDistance();
+	}
 }
 
 public static void linie_folgen(){     
@@ -228,9 +279,18 @@ public static void linie_folgen(){
 
 			Sound.beep();
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
+			boolean hindernisBoth = false;
 			while(hindernisErkanntLang()) {
+				hindernisBoth = hindernisErkanntLangBoth();
 				rotateLeft();
 				forwardTimed(1500);
+				rotateRight();
+		        ausrichten();
+			}
+			
+			if (hindernisBoth) {	
+				rotateLeft();
+				forwardTimed(1000);
 				rotateRight();
 			}
 			
@@ -244,9 +304,11 @@ public static void linie_folgen(){
 				continue;
 			}
 			rotateRight();
+			ausrichten();
 			
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
 			while(hindernisErkanntLang()) {
+				hindernisBoth = hindernisErkanntLangBoth();
 				Sound.beep();
 				rotateLeft();
 				//forwardTimed(1000);
@@ -258,17 +320,34 @@ public static void linie_folgen(){
 					break;
 				}
 				//forwardTimed(1000);
+		        ausrichten();
 				rotateRight();
 			}
+
+			if (hindernisBoth) {	
+				rotateLeft();
+				forwardTimed(1000);
+				rotateRight();
+			}
+			
 		} else if(isSearchingRight) {
 			// Nach links umfahren
 
 			Sound.beep();
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
+			boolean hindernisBoth = false;
 			while(hindernisErkanntLang()) {
+				hindernisBoth = hindernisErkanntLangBoth();
 				rotateRight();
 				forwardTimed(1500);
 				rotateLeft();
+				ausrichten();
+			}
+
+			if (hindernisBoth) {
+			rotateRight();
+			forwardTimed(1000);
+			rotateLeft();
 			}
 			
 			// Etwas vorwärts fahren und nach rechts zum Objekt hin drehen
@@ -281,9 +360,11 @@ public static void linie_folgen(){
 				continue;
 			}
 			rotateLeft();
+			ausrichten();
 			
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
 			while(hindernisErkanntLang()) {
+				hindernisBoth = hindernisErkanntLangBoth();
 				Sound.beep();
 				rotateRight();
 				//forwardTimed(1000);
@@ -295,6 +376,13 @@ public static void linie_folgen(){
 					break;
 				}
 				//forwardTimed(1000);
+				rotateLeft();
+				ausrichten();
+			}
+			
+			if (hindernisBoth) {	
+				rotateRight();
+				forwardTimed(1000);
 				rotateLeft();
 			}
 		} else {
@@ -325,7 +413,8 @@ public static void linie_folgen(){
 				//TODO: maybe drive back a bit?
 				
 				backward(500); //500
-				
+
+		        ausrichten();				
 				int testRotateAngle = 35;
 				//int testRotateAngle = 45;
 				
@@ -335,12 +424,8 @@ public static void linie_folgen(){
 				int rightTestValue = sonic_right.getDistance();
 				pilot.rotate(testRotateAngle);
 				
-				LCD.clear();
-				LCD.drawInt(leftTestValue, 0, 1);
-				LCD.drawInt(rightTestValue, 0, 2);
-				Button.waitForAnyPress();
-				
 				// try left
+
 				if(rightTestValue > leftTestValue) {
 					isSearchingRight = true;
 					continue;
