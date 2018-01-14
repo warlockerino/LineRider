@@ -99,7 +99,7 @@ public static void forwardTimed(int ms) {
 	pilot.stop();
 }
 
-static final int foo = 20;
+static final int foo = 10;
 
 public static final int FOUND_NOTHING = 0;
 public static final int FOUND_LINE = 16;
@@ -180,32 +180,56 @@ public static boolean isLineColor(int colorValue) {
 
 public static void handleSearchEnd() {
 	pilot.stop();
-	
+	//pilot.backward();
+	backward(250);
 	if(isSearchingLeft) {
 		isLeftGuided = true;
 		isSearchingLeft = false;
+		
+		while(true) {
+	        boolean leftIsLineColor = isLeftLineColor(); //left_weiss
+	        boolean rightIsLineColor = isRightLineColor();
+	        
+			if(leftIsLineColor && !rightIsLineColor) {
+				pilot.stop();
+				return;
+			}
+			
+			if(!leftIsLineColor && !rightIsLineColor) {
+	        	pilot.steer(50);
+			} else if(!leftIsLineColor && rightIsLineColor) {
+				pilot.steerBackward(-50);
+			} else if(leftIsLineColor && rightIsLineColor) {
+				pilot.backward();
+			}
+
+			Delay.msDelay(30);
+		}
+		
 	} else {
 		isLeftGuided = false;
-		isSearchingRight = false;		
+		isSearchingRight = false;
+		
+		while(true) {
+	        boolean leftIsLineColor  = isLeftLineColor(); //left_weiss
+	        boolean rightIsLineColor = isRightLineColor();
+	        
+			if(!leftIsLineColor && rightIsLineColor) {
+				pilot.stop();
+				return;
+			}
+			
+			if(!leftIsLineColor && !rightIsLineColor) {
+	        	pilot.steer(-50);
+			} else if(!leftIsLineColor && rightIsLineColor) {
+				pilot.steerBackward(50);
+			} else if(leftIsLineColor && rightIsLineColor) {
+				pilot.backward();
+			}
+
+			Delay.msDelay(30);
+		}
 	}
-	
-	// TODO verify search end turning direction
-	// i.e. (vllt condition vertauschen)
-	// if (isLeftGuided) {
-	//		pilot.rotate(70);
-	//	else
-	//		pilot.rotate(-70);
-	
-	
-	backward(100);
-	
-	//links.rotate(-135);
-	pilot.rotate(70);
-	
-	//links.rotate(-90, true);
-	//rechts.rotate(90);
-	
-	//forwardUntilLine();
 }
 
 public static boolean hindernisErkannt() {
@@ -247,13 +271,20 @@ public static void ausrichten() {
 	int rightDistance = sonic_right.getDistance();
 	
 	while(leftDistance != rightDistance) {
-		if(leftDistance > 50 || rightDistance > 50)
+		LCD.clear();
+		LCD.drawString(Integer.toString(leftDistance), 0, 1);
+		LCD.drawString(Integer.toString(rightDistance), 0, 2);
+		//Button.waitForAnyPress();
+		int diff = Math.abs(leftDistance - rightDistance);
+		if(leftDistance > 40 || rightDistance > 40)
 			break;
-		if (leftDistance > rightDistance) {
-			pilot.rotate(-8);
-		} else {
-			pilot.rotate(8);
-		}
+		//if (diff > 1) {
+			if (leftDistance > rightDistance) {
+				pilot.rotate(-8);
+			} else {
+				pilot.rotate(8);
+			}
+		//}
 		leftDistance  = sonic_left.getDistance();
 		rightDistance = sonic_right.getDistance();
 	}
@@ -448,7 +479,7 @@ public static void linie_folgen(){
   }
 
 public static int steerCount = 0;
-public static int steerCountThreshold = 12; // 10 12
+public static int steerCountThreshold = 14; // 10 12
 
 	public static void followLineLeftSide(boolean leftIsLineColor, boolean rightIsLineColor) {
 		if(steerCount > steerCountThreshold) {
