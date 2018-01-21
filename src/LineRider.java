@@ -25,7 +25,7 @@ public class LineRider {
     //static int weiss_wert=200;
     static int weiss_wert = 45;
     static int default_motor_strength = 200;
-    static int distance_threshold_value = 17; //15
+    static int distance_threshold_value = 20; //15
     
     private static boolean isStopped = false;
     private static boolean isSearchingLeft = false;
@@ -107,6 +107,10 @@ public static final int FOUND_LINE = 16;
 public static final int FOUND_OBJECT = 32;
 
 public static int forwardAndCheck(int ms) {
+	return forwardAndCheck(ms, false);
+}
+
+public static int forwardAndCheck(int ms, boolean includeDistanceSensor) {
 	int remainingMs = ms;
 	
 	pilot.forward();
@@ -121,6 +125,13 @@ public static int forwardAndCheck(int ms) {
 			
 			return FOUND_LINE;
 		}
+		if(includeDistanceSensor) {
+			if(hindernisErkannt()) // lang??
+			{ 
+				pilot.stop();
+				return FOUND_OBJECT;
+			}				
+		}
 		
 		Delay.msDelay(foo);
 		remainingMs -= foo;
@@ -128,7 +139,7 @@ public static int forwardAndCheck(int ms) {
 	
 	pilot.stop();
 	
-	return FOUND_OBJECT;
+	return FOUND_NOTHING;
 }
 
 public static void forwardUntilLine() {
@@ -270,7 +281,26 @@ public static boolean hindernisErkanntExtraLang() {
 
 public static void ausrichten() {
 	int leftDistance  = sonic_left.getDistance();
-	int rightDistance = sonic_right.getDistance();
+	int rightDistance = sonic_right.getDistance();	
+
+	int leftTestValue = sonic_left.getDistance();
+	int rightTestValue = sonic_right.getDistance();
+	
+	if(rightTestValue > 60 || leftTestValue > 60)
+		return;
+
+	int testRotateAngle = 16;
+	pilot.rotate(testRotateAngle);
+	leftTestValue = sonic_left.getDistance();
+	pilot.rotate(-testRotateAngle * 2);
+	rightTestValue = sonic_right.getDistance();
+	pilot.rotate(testRotateAngle);
+	
+	// try left
+
+	if(rightTestValue > 60 || leftTestValue > 60) {
+		return;
+	}
 	
 	while(leftDistance != rightDistance) {
 		LCD.clear();
@@ -317,7 +347,7 @@ public static void linie_folgen(){
 				rotateLeft();
 				forwardTimed(1500);
 				rotateRight();
-		        //ausrichten();
+		        ausrichten();
 			}
 			
 			if (hindernisBoth) {	
@@ -334,8 +364,16 @@ public static void linie_folgen(){
 				handleSearchEnd();
 				continue;
 			}
+			
 			rotateRight();
-			//ausrichten();
+			
+			//while(true)  {
+			//	int y = forwardAndCheck(2000, true);
+			//	if(y == FOUND_OBJECT) 
+			//		break;
+			//}
+			
+			ausrichten();
 			
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
 			while(hindernisErkanntLang()) {
@@ -349,7 +387,7 @@ public static void linie_folgen(){
 					break;
 				}
 				//forwardTimed(1000);
-		        //ausrichten();
+		        ausrichten();
 				rotateRight();
 			}
 
@@ -364,12 +402,14 @@ public static void linie_folgen(){
 
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
 			boolean hindernisBoth = false;
+			
+				
 			while(hindernisErkanntLang()) {
 				hindernisBoth = hindernisErkanntLangBoth();
 				rotateRight();
 				forwardTimed(1500);
 				rotateLeft();
-				//ausrichten();
+				ausrichten();
 			}
 
 			if (hindernisBoth) {
@@ -387,7 +427,7 @@ public static void linie_folgen(){
 				continue;
 			}
 			rotateLeft();
-			//ausrichten();
+			ausrichten();
 			
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
 			while(hindernisErkanntLang()) {
@@ -402,7 +442,7 @@ public static void linie_folgen(){
 				}
 				//forwardTimed(1000);
 				rotateLeft();
-				//ausrichten();
+				ausrichten();
 			}
 			
 			if (hindernisBoth) {	
@@ -411,7 +451,7 @@ public static void linie_folgen(){
 				rotateLeft();
 			}
 		} else {
-			if(sonic_left.getDistance()<=distance_threshold_value || sonic_right.getDistance()<=distance_threshold_value) {
+			if(sonic_left.getDistance()<=distance_threshold_value/2 || sonic_right.getDistance()<=distance_threshold_value/2) {
 				
 				/*int testRotateAngle = 35;
 				
@@ -435,10 +475,10 @@ public static void linie_folgen(){
 				pilot.rotate(testRotateAngle);*/
 
 				//TODO: maybe drive back a bit?
-				
-				backward(500); //500
 
-		        ausrichten();				
+		        ausrichten();	
+				backward(700); //500
+			
 				int testRotateAngle = 35;
 				//int testRotateAngle = 45;
 				
@@ -450,6 +490,7 @@ public static void linie_folgen(){
 				
 				// try left
 
+				ausrichten();
 				if(rightTestValue > leftTestValue) {
 					isSearchingRight = true;
 					continue;
