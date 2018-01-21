@@ -21,8 +21,9 @@ public class LineRider {
     static LightSensor light2 = new LightSensor(SensorPort.S2); // links
     static int light_right=-1;
     static int light_left=-1;
-    static int weiss_wert=51;//51
+    //static int weiss_wert=51;//51
     //static int weiss_wert=200;
+    static int weiss_wert = 45;
     static int default_motor_strength = 200;
     static int distance_threshold_value = 17; //15
     
@@ -115,7 +116,6 @@ public static int forwardAndCheck(int ms) {
         boolean rightIsLineColor = isRightLineColor();
         
 		if(leftIsLineColor || rightIsLineColor) {
-			Sound.beepSequence();
 			pilot.stop();
 			//pilot.rotate(15);
 			
@@ -181,7 +181,7 @@ public static boolean isLineColor(int colorValue) {
 public static void handleSearchEnd() {
 	pilot.stop();
 	//pilot.backward();
-	backward(250);
+	backward(100);
 	if(isSearchingLeft) {
 		isLeftGuided = true;
 		isSearchingLeft = false;
@@ -191,7 +191,9 @@ public static void handleSearchEnd() {
 	        boolean rightIsLineColor = isRightLineColor();
 	        
 			if(leftIsLineColor && !rightIsLineColor) {
-				pilot.stop();
+				Sound.beep();
+				pilot.forward();
+				Delay.msDelay(150);
 				return;
 			}
 			
@@ -202,7 +204,6 @@ public static void handleSearchEnd() {
 			} else if(leftIsLineColor && rightIsLineColor) {
 				pilot.backward();
 			}
-
 			Delay.msDelay(30);
 		}
 		
@@ -215,7 +216,9 @@ public static void handleSearchEnd() {
 	        boolean rightIsLineColor = isRightLineColor();
 	        
 			if(!leftIsLineColor && rightIsLineColor) {
-				pilot.stop();
+				Sound.beep();
+				pilot.forward();
+				Delay.msDelay(150);
 				return;
 			}
 			
@@ -226,7 +229,6 @@ public static void handleSearchEnd() {
 			} else if(leftIsLineColor && rightIsLineColor) {
 				pilot.backward();
 			}
-
 			Delay.msDelay(30);
 		}
 	}
@@ -308,7 +310,6 @@ public static void linie_folgen(){
 		else if(isSearchingLeft) {
 			// Nach links umfahren
 
-			Sound.beep();
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
 			boolean hindernisBoth = false;
 			while(hindernisErkanntLang()) {
@@ -316,12 +317,12 @@ public static void linie_folgen(){
 				rotateLeft();
 				forwardTimed(1500);
 				rotateRight();
-		        ausrichten();
+		        //ausrichten();
 			}
 			
 			if (hindernisBoth) {	
 				rotateLeft();
-				forwardTimed(1000);
+				forwardTimed(500);
 				rotateRight();
 			}
 			
@@ -330,41 +331,37 @@ public static void linie_folgen(){
 			//forwardTimed(2000);
 			int x = forwardAndCheck(2000);
 			if(x == FOUND_LINE) {
-				Sound.buzz();
 				handleSearchEnd();
 				continue;
 			}
 			rotateRight();
-			ausrichten();
+			//ausrichten();
 			
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
 			while(hindernisErkanntLang()) {
 				hindernisBoth = hindernisErkanntLangBoth();
-				Sound.beep();
 				rotateLeft();
 				//forwardTimed(1000);
 				x = forwardAndCheck(1500);
 				if(x == FOUND_LINE) { //false && 
-					Sound.buzz();
 					//return;
 					handleSearchEnd();
 					break;
 				}
 				//forwardTimed(1000);
-		        ausrichten();
+		        //ausrichten();
 				rotateRight();
 			}
 
 			if (hindernisBoth) {	
 				rotateLeft();
-				forwardTimed(1000);
+				forwardTimed(500);
 				rotateRight();
 			}
 			
 		} else if(isSearchingRight) {
 			// Nach links umfahren
 
-			Sound.beep();
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
 			boolean hindernisBoth = false;
 			while(hindernisErkanntLang()) {
@@ -372,13 +369,13 @@ public static void linie_folgen(){
 				rotateRight();
 				forwardTimed(1500);
 				rotateLeft();
-				ausrichten();
+				//ausrichten();
 			}
 
 			if (hindernisBoth) {
-			rotateRight();
-			forwardTimed(1000);
-			rotateLeft();
+				rotateRight();
+				forwardTimed(500);
+				rotateLeft();
 			}
 			
 			// Etwas vorwärts fahren und nach rechts zum Objekt hin drehen
@@ -386,39 +383,35 @@ public static void linie_folgen(){
 			//forwardTimed(2000);
 			int x = forwardAndCheck(2000);
 			if(x == FOUND_LINE) {
-				Sound.buzz();
 				handleSearchEnd();
 				continue;
 			}
 			rotateLeft();
-			ausrichten();
+			//ausrichten();
 			
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
 			while(hindernisErkanntLang()) {
 				hindernisBoth = hindernisErkanntLangBoth();
-				Sound.beep();
 				rotateRight();
 				//forwardTimed(1000);
 				x = forwardAndCheck(1500);
 				if(x == FOUND_LINE) { //false && 
-					Sound.buzz();
 					//return;
 					handleSearchEnd();
 					break;
 				}
 				//forwardTimed(1000);
 				rotateLeft();
-				ausrichten();
+				//ausrichten();
 			}
 			
 			if (hindernisBoth) {	
 				rotateRight();
-				forwardTimed(1000);
+				forwardTimed(500);
 				rotateLeft();
 			}
 		} else {
 			if(sonic_left.getDistance()<=distance_threshold_value || sonic_right.getDistance()<=distance_threshold_value) {
-				Sound.buzz();
 				
 				/*int testRotateAngle = 35;
 				
@@ -483,7 +476,6 @@ public static int steerCountThreshold = 14; // 10 12
 
 	public static void followLineLeftSide(boolean leftIsLineColor, boolean rightIsLineColor) {
 		if(steerCount > steerCountThreshold) {
-			Sound.buzz();
 			isMovingToExit = true;
 			while(true) {
 				pilot.steer(-200);
@@ -522,7 +514,6 @@ public static int steerCountThreshold = 14; // 10 12
 	
 	public static void followLineRightSide(boolean leftIsLineColor, boolean rightIsLineColor) {
 		if(steerCount > steerCountThreshold) {
-			Sound.buzz();
 			isMovingToExit = true;
 			while(true) {
 				pilot.steer(200);
