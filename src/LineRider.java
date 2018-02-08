@@ -20,8 +20,8 @@ public class LineRider {
     // component objects
     static UltrasonicSensor sonic_right = new UltrasonicSensor(SensorPort.S1);
     static UltrasonicSensor sonic_left = new UltrasonicSensor(SensorPort.S4);    
-    static LightSensor light = new LightSensor(SensorPort.S3); // rechts
-    static LightSensor light2 = new LightSensor(SensorPort.S2); // links
+    static LightSensor lightRight = new LightSensor(SensorPort.S3);
+    static LightSensor lightLeft = new LightSensor(SensorPort.S2);
     
     // line-detection threshold value
     // calibrated, 45 or 51
@@ -42,11 +42,20 @@ public class LineRider {
     // movement variation flag
     // defines if robot is following the left or right edge of the line
     private static boolean isLeftGuided = true;
-    
+
+static final int foo = 10;
+
+public static final int FOUND_NOTHING = 0;
+public static final int FOUND_LINE = 16;
+public static final int FOUND_OBJECT = 32;
+
+public static int steerCount = 0;
+public static int steerCountThreshold = 14; // 10 12
+
     public static void main(String[] args) throws InterruptedException {
        LCD.clear();
-           light.setFloodlight(true);
-           light2.setFloodlight(true);
+           lightRight.setFloodlight(true);
+           lightLeft.setFloodlight(true);
     
            NXTRegulatedMotor links = new NXTRegulatedMotor(MotorPort.B);
            NXTRegulatedMotor rechts = new NXTRegulatedMotor(MotorPort.A);
@@ -82,12 +91,6 @@ public static void forwardTimed(int ms) {
 	
 	pilot.stop();
 }
-
-static final int foo = 10;
-
-public static final int FOUND_NOTHING = 0;
-public static final int FOUND_LINE = 16;
-public static final int FOUND_OBJECT = 32;
 
 public static int forwardAndCheck(int ms) {
 	return forwardAndCheck(ms, false);
@@ -440,9 +443,6 @@ public static void linie_folgen(){
      }
   }
 
-public static int steerCount = 0;
-public static int steerCountThreshold = 14; // 10 12
-
 	// follow the line at the left edge
 	public static void followLineLeftSide(boolean leftIsLineColor, boolean rightIsLineColor) {
 		if(steerCount > steerCountThreshold) {
@@ -522,12 +522,12 @@ public static int steerCountThreshold = 14; // 10 12
 	}
 	
 	public static boolean isLeftLineColor() {
-		int light_left = light.getLightValue();
+		int light_left = lightRight.getLightValue();
 		return isLineColor(light_left);
 	}
 	
 	public static boolean isRightLineColor() {
-		int light_right = light2.getLightValue();	
+		int light_right = lightLeft.getLightValue();	
 		return isLineColor(light_right);
 	}
 }
