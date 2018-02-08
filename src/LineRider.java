@@ -17,20 +17,20 @@ public class LineRider {
 	static DifferentialPilot pilot;
 
 	// component objects
-	static UltrasonicSensor sonic_right = new UltrasonicSensor(SensorPort.S1);
-	static UltrasonicSensor sonic_left = new UltrasonicSensor(SensorPort.S4);
+	static UltrasonicSensor sonicSensorRight = new UltrasonicSensor(SensorPort.S1);
+	static UltrasonicSensor sonicSensorLeft = new UltrasonicSensor(SensorPort.S4);
 	static LightSensor lightRight = new LightSensor(SensorPort.S3);
 	static LightSensor lightLeft = new LightSensor(SensorPort.S2);
 
 	// line-detection threshold value
 	// calibrated, 45 or 51
-	static int weiss_wert = 45;
+	static int whiteValue = 45;
 
 	//
-	static int default_motor_strength = 200;
+	static int defaultMotorStrength = 200;
 
 	//
-	static int distance_threshold_value = 20;
+	static int distanceThresholdValue = 20;
 
 	// state machine flags
 	private static boolean isStopped = false;
@@ -42,7 +42,7 @@ public class LineRider {
 	// defines if robot is following the left or right edge of the line
 	private static boolean isLeftGuided = true;
 
-	static final int foo = 10;
+	static final int forwardAndCheckStepValue = 10;
 
 	public static final int FOUND_NOTHING = 0;
 	public static final int FOUND_LINE = 16;
@@ -58,8 +58,8 @@ public class LineRider {
 
 		NXTRegulatedMotor links = new NXTRegulatedMotor(MotorPort.B);
 		NXTRegulatedMotor rechts = new NXTRegulatedMotor(MotorPort.A);
-		links.setSpeed(default_motor_strength);
-		rechts.setSpeed(default_motor_strength);
+		links.setSpeed(defaultMotorStrength);
+		rechts.setSpeed(defaultMotorStrength);
 		pilot = new DifferentialPilot(56, 56, 115, links, rechts, false); // 115 138
 		pilot.setRotateSpeed(90);
 		pilot.setTravelSpeed(120);
@@ -110,15 +110,15 @@ public class LineRider {
 				return FOUND_LINE;
 			}
 			if (includeDistanceSensor) {
-				if (hindernisErkannt()) // lang??
+				if (hindernisErkannt())
 				{
 					pilot.stop();
 					return FOUND_OBJECT;
 				}
 			}
 
-			Delay.msDelay(foo);
-			remainingMs -= foo;
+			Delay.msDelay(forwardAndCheckStepValue);
+			remainingMs -= forwardAndCheckStepValue;
 		}
 
 		pilot.stop();
@@ -162,7 +162,7 @@ public class LineRider {
 	}
 
 	public static boolean isLineColor(int colorValue) {
-		return colorValue > weiss_wert;
+		return colorValue > whiteValue;
 	}
 
 	public static void handleSearchEnd() {
@@ -221,37 +221,35 @@ public class LineRider {
 	}
 
 	public static boolean hindernisErkannt() {
-		return sonic_left.getDistance() <= distance_threshold_value
-				|| sonic_right.getDistance() <= distance_threshold_value;
+		return sonicSensorLeft.getDistance() <= distanceThresholdValue
+				|| sonicSensorRight.getDistance() <= distanceThresholdValue;
 	}
 
 	public static boolean hindernisErkanntLang() {
-		int leftValue = sonic_left.getDistance();
-		int rightValue = sonic_right.getDistance();
-		return leftValue <= distance_threshold_value + 5 || rightValue <= distance_threshold_value + 5;
+		int leftValue = sonicSensorLeft.getDistance();
+		int rightValue = sonicSensorRight.getDistance();
+		return leftValue <= distanceThresholdValue + 5 || rightValue <= distanceThresholdValue + 5;
 	}
 
 	public static boolean hindernisErkanntLangBoth() {
-		int leftValue = sonic_left.getDistance();
-		int rightValue = sonic_right.getDistance();
-		return leftValue <= distance_threshold_value + 5 && rightValue <= distance_threshold_value + 5;
+		int leftValue = sonicSensorLeft.getDistance();
+		int rightValue = sonicSensorRight.getDistance();
+		return leftValue <= distanceThresholdValue + 5 && rightValue <= distanceThresholdValue + 5;
 	}
 
 	public static boolean hindernisErkanntExtraLang() {
-		int leftValue = sonic_left.getDistance();
-		int rightValue = sonic_right.getDistance();
+		int leftValue = sonicSensorLeft.getDistance();
+		int rightValue = sonicSensorRight.getDistance();
 		return leftValue <= 50 || rightValue <= 50;
 	}
 
 	public static void ausrichten() {
 		// Diese Funktion wurde mit Absicht auskommentiert, da diese in dem derzeitigen
-		// Stand für mehr Probleme gesorgt
-		// hat als sie löst. Das ausrichten ist prinzipiell jedoch eine gute Idee (mehr
-		// Details hierzu in der Dokumentation),
+		// Stand für mehr Probleme gesorgt hat als sie löst. Das ausrichten ist prinzipiell 
+		// jedoch eine gute Idee (mehr Details hierzu in der Dokumentation),
 		// konnte jedoch bisher nicht erfolgreich implementiert werden da die
-		// Ultraschall-Sensoren hierzu einfach zu
-		// unverlässige Werte liefern bzw. in zu vielen Situationen (Schieflage etc.)
-		// nicht korrekt funktionieren (können).
+		// Ultraschall-Sensoren hierzu einfach zu unverlässige Werte liefern bzw. in zu 
+		// vielen Situationen (Schieflage etc.) nicht korrekt funktionieren (können).
 		return;
 
 		/*
@@ -394,17 +392,17 @@ public class LineRider {
 					rotateLeft();
 				}
 			} else {
-				if (sonic_left.getDistance() <= distance_threshold_value / 2
-						|| sonic_right.getDistance() <= distance_threshold_value / 2) {
+				if (sonicSensorLeft.getDistance() <= distanceThresholdValue / 2
+						|| sonicSensorRight.getDistance() <= distanceThresholdValue / 2) {
 					ausrichten();
 					backward(700);
 
 					int testRotateAngle = 35;
 
 					pilot.rotate(testRotateAngle);
-					int leftTestValue = sonic_left.getDistance();
+					int leftTestValue = sonicSensorLeft.getDistance();
 					pilot.rotate(-testRotateAngle * 2);
-					int rightTestValue = sonic_right.getDistance();
+					int rightTestValue = sonicSensorRight.getDistance();
 					pilot.rotate(testRotateAngle);
 
 					// try left
