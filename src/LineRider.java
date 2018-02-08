@@ -280,7 +280,9 @@ public static boolean hindernisErkanntExtraLang() {
 }
 
 public static void ausrichten() {
-	int leftDistance  = sonic_left.getDistance();
+	return;
+	
+	/*int leftDistance  = sonic_left.getDistance();
 	int rightDistance = sonic_right.getDistance();	
 
 	int leftTestValue = sonic_left.getDistance();
@@ -319,7 +321,7 @@ public static void ausrichten() {
 		//}
 		leftDistance  = sonic_left.getDistance();
 		rightDistance = sonic_right.getDistance();
-	}
+	}*/
 }
 
 public static void linie_folgen(){     
@@ -343,7 +345,7 @@ public static void linie_folgen(){
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
 			boolean hindernisBoth = false;
 			while(hindernisErkanntLang()) {
-				hindernisBoth = hindernisErkanntLangBoth();
+				hindernisBoth = hindernisErkannt();
 				rotateLeft();
 				forwardTimed(1500);
 				rotateRight();
@@ -398,14 +400,14 @@ public static void linie_folgen(){
 			}
 			
 		} else if(isSearchingRight) {
-			// Nach links umfahren
+			// Nach rechts umfahren
 
 			// links lang "strafen" bis kein Hindernis auf beiden Seiten mehr erkannt wurde
 			boolean hindernisBoth = false;
 			
 				
 			while(hindernisErkanntLang()) {
-				hindernisBoth = hindernisErkanntLangBoth();
+				hindernisBoth = hindernisErkannt();
 				rotateRight();
 				forwardTimed(1500);
 				rotateLeft();
